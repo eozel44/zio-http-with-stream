@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter
 import java.time.{LocalDate}
 import scala.util.control.NonFatal
 
-case class Speech(speaker: String, topic:String, dateOfSpeech: LocalDate, wordCount:Long)
+case class Speech(speaker: String, topic:String, dateOfSpeech: LocalDate, wordCount:Option[Long])
 
 object Speech {
 
