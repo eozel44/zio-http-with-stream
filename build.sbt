@@ -1,6 +1,11 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+import Dependencies._
 
-ThisBuild / scalaVersion := "2.13.11"
+ThisBuild / scalaVersion := "2.13.8"
+ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / organization := "com.eozel"
+ThisBuild / organizationName := "eozel"
+
+ThisBuild / semanticdbEnabled := true
 
 
 lazy val scalacopts = Seq(
@@ -15,18 +20,13 @@ lazy val scalacopts = Seq(
 
 lazy val root = (project in file("."))
   .settings(
-    name := "zio-fashion",
-      scalacOptions ++= scalacopts
+    name := "speech_challenge",
+    libraryDependencies ++= Seq(
+      zio,
+      zioHttp,
+      zioStream,
+      scalaTest % Test
+    ) ++ circe ++ zioTest,
+    scalacOptions ++= scalacopts,
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-
-val ZIOVersion  = "2.0.11"
-libraryDependencies ++= Seq(
-  "dev.zio"    %% "zio"                 % ZIOVersion,
-  "dev.zio" %% "zio-streams" %  ZIOVersion,
-  "dev.zio" %% "zio-http" % "3.0.0-RC2",
-  "io.circe" %% "circe-core" % "0.14.2",
-  "io.circe" %% "circe-generic" % "0.14.2",
-  "io.circe" %% "circe-parser" % "0.14.2"
-  )
-
-
