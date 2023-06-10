@@ -30,7 +30,7 @@ import domain.Speech._
 
     val program = for {
 
-      res  <- Client.request(url)
+      res  <- Client.request(url).mapError(k => HttpClientError(k.getMessage))
       zstream = res.body.asStream
         .via(ZPipeline.utf8Decode >>> ZPipeline.splitLines)
         .via(ZPipeline.drop(1))
