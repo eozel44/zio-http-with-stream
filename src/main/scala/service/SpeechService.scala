@@ -12,14 +12,16 @@ object SpeechService {
 
   import domain.Speech._
 
-  private def sum(stream: ZStream[Any, Throwable, Option[Long]]): ZIO[Any, Throwable, Option[Long]] =
+  def sum2(a:Long,b:Long)=ZIO.succeed(a+b)
+
+  def sum(stream: ZStream[Any, Throwable, Option[Long]]): ZIO[Any, Throwable, Option[Long]] =
     stream.runFold(Option.empty[Long]) {
       case (None, some)       => some
       case (Some(x), Some(y)) => Some(x + y)
       case (some, None)       => some
     }
 
-  private def calculate(
+  def calculate(
     stream: ZStream[Any, Throwable, Speech]
   ): ZStream[Any, Throwable, (String, Option[Long])] =
     stream.groupBy(in => ZIO.succeed(in.speaker, in.wordCount)) { case (speaker, stream) =>
@@ -45,9 +47,9 @@ object SpeechService {
                     .broadcast(3, 30)
 
       mostSpeechs   <- calculate(
-                         zstreams(0).filter(in => in.dateOfSpeech.get(ChronoField.YEAR).equals(2012))
+                         zstreams(0).filter(in => in.dateOfSpeech.get(ChronoField.YEAR).equals(2013))
                        ).runCollect.fork
-      mostSpecurity <- calculate(zstreams(1).filter(in => in.topic.equals("Kohlesubventionen"))).runCollect.fork
+      mostSpecurity <- calculate(zstreams(1).filter(in => in.topic.equals("Innere Sicherheit"))).runCollect.fork
       leastWordy    <- calculate(zstreams(2)).runCollect.fork
 
       zipped <- mostSpeechs.zip(mostSpecurity).zip(leastWordy).join

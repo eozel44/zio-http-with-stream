@@ -2,7 +2,7 @@ import sbt._
 
 object Versions {
   val scala2                  = "2.13.8"
-  val zio                     = "2.0.6"
+  val zio                     = "2.0.15"
   val zioHttp                 = "3.0.0-RC2"
   val zioNio                  = "2.0.0"
   val zioConfig               = "3.0.2"
@@ -27,7 +27,8 @@ object Dependencies {
   ).map(_ % Versions.circe)
 
   lazy val zioTest    = Seq(
-    "dev.zio" %% "zio-test"     % Versions.zio % "test",
-    "dev.zio" %% "zio-test-sbt" % Versions.zio % "test"
+    "dev.zio" %% "zio-test"     % Versions.zio % Test,
+    "dev.zio" %% "zio-test-sbt" % Versions.zio % Test,
+    "dev.zio" %% "zio-test-magnolia" % Versions.zio % Test
   )
 }
