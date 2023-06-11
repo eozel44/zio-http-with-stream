@@ -31,17 +31,16 @@ object SpeechService {
 
       zstreams <- ZStream
                     .fromIterable(urls)
-                    .flatMap(url =>
+                    .flatMapPar(2)(url =>
                       ZStream
                         .fromZIO(Client.request(url).mapError(k => HttpClientError(k.getMessage)))
                         .flatMap(l => l.body.asStream)
                         .via(ZPipeline.utf8Decode >>> ZPipeline.splitLines)
                         .via(ZPipeline.drop(1))
                     )
-                    .via(
-                      ZPipeline.mapZIO(in =>
+                    .buffer(100)
+                    .mapZIOParUnordered(4)(in =>
                         ZIO.fromEither(decode[Speech](convertToJson(in))).mapError(k => ParsingError(k.getMessage()))
-                      )
                     )
                     .broadcast(3, 30)
 
@@ -54,9 +53,9 @@ object SpeechService {
       zipped <- mostSpeechs.zip(mostSpecurity).zip(leastWordy).join
 
     } yield (
-      zipped._1.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).head._1,
-      zipped._2.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).head._1,
-      zipped._3.sortWith(_._2.getOrElse(0L) < _._2.getOrElse(0L)).head._1
+      zipped._1.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).headOption.map(_._1),
+      zipped._2.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).headOption.map(_._1),
+      zipped._3.sortWith(_._2.getOrElse(0L) < _._2.getOrElse(0L)).headOption.map(_._1)
     )
 
 }

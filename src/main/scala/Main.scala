@@ -24,7 +24,9 @@ object Main extends ZIOAppDefault {
         result =>
           ZIO.succeed(
             Response
-              .text(s"""{"mostSecurity": "${result._1}","mostSpeeches": "${result._2}","leastWordy": "${result._3}"}""")
+              .json(
+                s"""{"mostSecurity": "${result._1.getOrElse("null")}","mostSpeeches":
+                   |"${result._2.getOrElse("null")}","leastWordy": "${result._3.getOrElse("null")}"}""".stripMargin)
           )
       )
   }
