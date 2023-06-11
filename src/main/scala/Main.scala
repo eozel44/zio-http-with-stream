@@ -7,20 +7,29 @@ object Main extends ZIOAppDefault {
 
   import service._
 
-  val url = "https://fid-recruiting.s3-eu-west-1.amazonaws.com/politics.csv"
+  val urls = List(
+    "https://fid-recruiting.s3-eu-west-1.amazonaws.com/politics.csv",
+    "https://fid-recruiting.s3-eu-west-1.amazonaws.com/politics.csv",
+    "https://fid-recruiting.s3-eu-west-1.amazonaws.com/politics.csv"
+  )
 
-  val app: HttpApp[Client, Nothing] = Http.collectZIO[Request] { case Method.GET -> Root / "text" =>
+  val app: HttpApp[Client & Scope, Nothing] = Http.collectZIO[Request] { case Method.GET -> Root / "evaluation" =>
     SpeechService
-      .calculateSpeechs(url)
-      .fold(
+      .calculateSpeechs(urls)
+      .foldZIO(
         { case error: ServiceError =>
-          Response.fromHttpError(InternalServerError("Internal error : " + error.getMessage))
+          Console.printLine(error).orDie *>
+            ZIO.succeed(Response.fromHttpError(InternalServerError("Internal error : " + error.getMessage)))
         },
-        message => Response.text(message)
+        result =>
+          ZIO.succeed(
+            Response
+              .text(s"""{"mostSecurity": "${result._1}","mostSpeeches": "${result._2}","leastWordy": "${result._3}"}""")
+          )
       )
   }
 
   override val run =
-    Server.serve(app).provide(Client.default, Server.defaultWithPort(8090))
+    Server.serve(app).provide(Client.default, Scope.default, Server.defaultWithPort(8090))
 
 }

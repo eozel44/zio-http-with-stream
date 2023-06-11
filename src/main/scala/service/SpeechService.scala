@@ -6,6 +6,8 @@ import zio.http.Client
 import zio.stream._
 import io.circe.parser._
 
+import java.time.temporal.ChronoField
+
 object SpeechService {
 
   import domain.Speech._
@@ -24,32 +26,37 @@ object SpeechService {
       ZStream.fromZIO(sum(stream)).map(r => (speaker, r))
     }
 
-  def calculateSpeechs(url: String) =
+  def calculateSpeechs(urls: List[String]) =
     for {
 
-      res    <- Client.request(url).mapError(k => HttpClientError(k.getMessage))
-      zstream = res.body.asStream
-                  .via(ZPipeline.utf8Decode >>> ZPipeline.splitLines)
-                  .via(ZPipeline.drop(1))
-                  .via(
-                    ZPipeline.mapZIO(in =>
-                      ZIO.fromEither(decode[Speech](convertToJson(in))).mapError(k => ParsingError(k.getMessage()))
+      zstreams <- ZStream
+                    .fromIterable(urls)
+                    .flatMap(url =>
+                      ZStream
+                        .fromZIO(Client.request(url).mapError(k => HttpClientError(k.getMessage)))
+                        .flatMap(l => l.body.asStream)
+                        .via(ZPipeline.utf8Decode >>> ZPipeline.splitLines)
+                        .via(ZPipeline.drop(1))
                     )
-                  )
+                    .via(
+                      ZPipeline.mapZIO(in =>
+                        ZIO.fromEither(decode[Speech](convertToJson(in))).mapError(k => ParsingError(k.getMessage()))
+                      )
+                    )
+                    .broadcast(3, 30)
 
-      //mostSpeechs   <- calculate(zstream.filter(in=> in.dateOfSpeech.get(ChronoField.YEAR).equals(2012))).runCollect
-      //mostSpeechsSpeaker = mostSpeechs.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).head._1
-      //_ <- Console.printLine(mostSpeechsSpeaker)
+      mostSpeechs   <- calculate(
+                         zstreams(0).filter(in => in.dateOfSpeech.get(ChronoField.YEAR).equals(2012))
+                       ).runCollect.fork
+      mostSpecurity <- calculate(zstreams(1).filter(in => in.topic.equals("Kohlesubventionen"))).runCollect.fork
+      leastWordy    <- calculate(zstreams(2)).runCollect.fork
 
-      mostSpecurity       <- calculate(zstream.filter(in => in.topic.equals("Kohlesubventionen"))).runCollect
-      mostSecuritysSpeaker = mostSpecurity.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).head._1
-      // _                   <- Console.printLine(mostSecuritysSpeaker)
-      //result                   <- Response.text(mostSecuritysSpeaker)
+      zipped <- mostSpeechs.zip(mostSpecurity).zip(leastWordy).join
 
-      //      leastWordy    <- calculate(zstream).runCollect
-      //      leastWordySpeaker = leastWordy.sortWith(_._2.getOrElse(0L) < _._2.getOrElse(0L)).head._1
-      //      _ <- Console.printLine(leastWordySpeaker)
-
-    } yield mostSecuritysSpeaker
+    } yield (
+      zipped._1.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).head._1,
+      zipped._2.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).head._1,
+      zipped._3.sortWith(_._2.getOrElse(0L) < _._2.getOrElse(0L)).head._1
+    )
 
 }
