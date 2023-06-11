@@ -12,7 +12,7 @@ object SpeechService {
 
   import domain.Speech._
 
-  def sum2(a:Long,b:Long)=ZIO.succeed(a+b)
+  def sum2(a: Long, b: Long) = ZIO.succeed(a + b)
 
   def sum(stream: ZStream[Any, Throwable, Option[Long]]): ZIO[Any, Throwable, Option[Long]] =
     stream.runFold(Option.empty[Long]) {
@@ -42,7 +42,7 @@ object SpeechService {
                     )
                     .buffer(100)
                     .mapZIOParUnordered(4)(in =>
-                        ZIO.fromEither(decode[Speech](convertToJson(in))).mapError(k => ParsingError(k.getMessage()))
+                      ZIO.fromEither(decode[Speech](convertToJson(in))).mapError(k => ParsingError(k.getMessage()))
                     )
                     .broadcast(3, 30)
 
