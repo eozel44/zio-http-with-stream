@@ -43,12 +43,13 @@ object SpeechService {
 
       mostSpecurity       <- calculate(zstream.filter(in => in.topic.equals("Kohlesubventionen"))).runCollect
       mostSecuritysSpeaker = mostSpecurity.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).head._1
-      _                   <- Console.printLine(mostSecuritysSpeaker)
+      // _                   <- Console.printLine(mostSecuritysSpeaker)
+      //result                   <- Response.text(mostSecuritysSpeaker)
 
       //      leastWordy    <- calculate(zstream).runCollect
       //      leastWordySpeaker = leastWordy.sortWith(_._2.getOrElse(0L) < _._2.getOrElse(0L)).head._1
       //      _ <- Console.printLine(leastWordySpeaker)
 
-    } yield res
+    } yield mostSecuritysSpeaker
 
 }
