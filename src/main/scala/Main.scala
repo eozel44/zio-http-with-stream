@@ -7,15 +7,10 @@ object Main extends ZIOAppDefault {
 
   import service._
 
-  val urls = List(
-    "https://fid-recruiting.s3-eu-west-1.amazonaws.com/politics.csv",
-    "https://fid-recruiting.s3-eu-west-1.amazonaws.com/politics.csv",
-    "https://fid-recruiting.s3-eu-west-1.amazonaws.com/politics.csv"
-  )
-
-  val app: HttpApp[Client & Scope, Nothing] = Http.collectZIO[Request] { case Method.GET -> Root / "evaluation" =>
+  val app: HttpApp[Client & Scope, Nothing] = Http.collectZIO[Request] {
+    case request @ Method.GET ->  Root / "evaluation" =>
     SpeechService
-      .calculateSpeechs(urls)
+      .calculateSpeechs(request.url.queryParams.get("url").toList.flatten)
       .foldZIO(
         { case error: ServiceError =>
           Console.printLine(error).orDie *>
