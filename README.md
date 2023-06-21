@@ -1,4 +1,4 @@
-# ZHttp & ZStream 
+# ZIO Http & ZStream 
 
 Build http server with ZIO, ZStream and ZHttp
 
