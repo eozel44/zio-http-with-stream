@@ -36,20 +36,18 @@ val circe                   = "0.14.2"
       .mapZIOParUnordered(4)(in =>
         ZIO.fromEither(decode[Speech](convertToJson(in))).mapError(k => ParsingError(k.getMessage()))
       )
-      .broadcast(3, 30)
+      .broadcast(2, 30)
 
     mostSpeechs   <- calculate(
       zstreams(0).filter(in => in.dateOfSpeech.get(ChronoField.YEAR).equals(2013))
-    ).runCollect.fork
-    mostSpecurity <- calculate(zstreams(1).filter(in => in.topic.equals("Innere Sicherheit"))).runCollect.fork
+    ).runCollect.fork   
     leastWordy    <- calculate(zstreams(2)).runCollect.fork
 
-    zipped <- mostSpeechs.zip(mostSpecurity).zip(leastWordy).join
+    zipped <- mostSpeechs.zip(leastWordy).join
 
   } yield (
-    zipped._1.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).headOption.map(_._1),
-    zipped._2.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).headOption.map(_._1),
-    zipped._3.sortWith(_._2.getOrElse(0L) < _._2.getOrElse(0L)).headOption.map(_._1)
+    zipped._1.sortWith(_._2.getOrElse(0L) > _._2.getOrElse(0L)).headOption.map(_._1),    
+    zipped._2.sortWith(_._2.getOrElse(0L) < _._2.getOrElse(0L)).headOption.map(_._1)
   )
 ```
 ### run:
